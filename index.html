@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DRUNOSTAN.pub</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@500;700;900&display=swap');
+
+        :root {
+            --bg-main: #000000;
+            --text-pale: #cbd5e1; 
+            --border-dim: rgba(255, 255, 255, 0.03);
+            --bright-ice: #e0f2fe; 
+            --strong-glow: 0 0 20px rgba(186, 230, 253, 0.3), 0 4px 15px rgba(0, 0, 0, 0.9);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-pale);
+            font-family: 'Comfortaa', cursive, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 3rem 1rem 0 1rem;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Объёмное свечение сверху — источник света */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background:
+                radial-gradient(ellipse 80% 30% at 50% 0%, rgba(147, 197, 253, 0.07) 0%, transparent 100%);
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        /* Вырубаем старые CSS лучи, чтобы они не конфликтовали с канвасом и не шакалили картинку */
+        body::after { display: none !important; }
+        .main-ray-mask { display: none !important; }
+
+        /* Canvas для геометрических лучей и морской пыли */
+        #ocean-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        header, main {
+            width: 100%;
+            max-width: 420px;
+            position: relative;
+            z-index: 2;
+        }
+
+        @keyframes entryReveal {
+            0% { opacity: 0; transform: translateY(20px); filter: blur(4px); }
+            100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+        }
+
+        @keyframes float-1 {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-2px) rotate(0.2deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            font-weight: 900;
+            color: #ffffff;
+            text-align: center;
+            letter-spacing: -0.02em;
+            margin-bottom: 2rem;
+            animation: entryReveal 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .block-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.6rem;
+            padding-left: 0.5rem;
+            animation: entryReveal 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .lilypad-box {
+            background: rgba(2, 4, 6, 0.95);
+            border: 1px solid var(--border-dim);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+            cursor: pointer;
+            opacity: 0;
+            transition: border-color 1.2s cubic-bezier(0.4, 0, 0.2, 1), 
+                        box-shadow 1.2s cubic-bezier(0.4, 0, 0.2, 1), 
+                        background-color 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .lilypad-box:hover {
+            background-color: rgba(4, 8, 12, 0.98);
+            border-color: rgba(186, 230, 253, 0.3);
+            box-shadow: 0 0 12px rgba(186, 230, 253, 0.15);
+            transition: border-color 0.5s ease, box-shadow 0.5s ease;
+        }
+
+        .lilypad-box.active {
+            background-color: rgba(4, 8, 12, 0.98) !important;
+            border-color: var(--bright-ice) !important;
+            box-shadow: var(--strong-glow) !important;
+        }
+
+        .card-main { border-radius: 20px; padding: 1.2rem; margin-bottom: 1.5rem; animation: entryReveal 1s cubic-bezier(0.16, 1, 0.3, 1) forwards, float-1 6s ease-in-out infinite 1s; }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem; margin-bottom: 1.5rem; }
+        .cell-1 { border-radius: 16px; padding: 0.8rem 1rem; display: flex; flex-direction: column; animation: entryReveal 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards, float-1 5.5s ease-in-out infinite 1.1s; }
+        .cell-2 { border-radius: 16px; padding: 0.8rem 1rem; display: flex; flex-direction: column; animation: entryReveal 1.15s cubic-bezier(0.16, 1, 0.3, 1) forwards, float-1 6.5s ease-in-out infinite 1.15s; }
+        .cell-3 { border-radius: 16px; padding: 0.8rem 1rem; display: flex; flex-direction: column; animation: entryReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards, float-1 5.8s ease-in-out infinite 1.2s; }
+        .cell-4 { border-radius: 16px; padding: 0.8rem 1rem; display: flex; flex-direction: column; animation: entryReveal 1.25s cubic-bezier(0.16, 1, 0.3, 1) forwards, float-1 6.2s ease-in-out infinite 1.25s; }
+        .card-creators { border-radius: 16px; padding: 0.8rem 1rem; margin-bottom: 1.5rem; animation: entryReveal 1.3s cubic-bezier(0.16, 1, 0.3, 1) forwards, float-1 7s ease-in-out infinite 1.3s; }
+        
+        .creator-links { font-size: 0.85rem; font-weight: 700; color: #ffffff; margin-top: 0.2rem; }
+        .tags { font-size: 0.75rem; color: #38bdf8; font-weight: 700; margin-top: 0.4rem; letter-spacing: 0.05em; }
+        p { font-size: 0.8rem; line-height: 1.6; font-weight: 700; color: #94a3b8; }
+        .cell-label { font-size: 0.7rem; font-weight: 700; color: #475569; margin-bottom: 0.2rem; }
+        .cell-value { font-size: 1.2rem; font-weight: 900; color: #ffffff; }
+
+        .btn-action {
+            display: flex; justify-content: center; align-items: center; width: 100%; padding: 1rem; border-radius: 18px; color: #ffffff; text-decoration: none; font-size: 0.85rem; font-weight: 700;
+            animation: entryReveal 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards, float-1 6s ease-in-out infinite 1.4s;
+        }
+
+        /* Ультра-глубокое позиционирование архива */
+        .abyssal-archive {
+            margin-top: 320vh; /* Контент опущен экстремально низко в бездну */
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            padding-bottom: 5rem;
+        }
+
+        .archive-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .archive-item {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: #050505;
+            cursor: pointer;
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .archive-item:hover {
+            transform: scale(1.03);
+            border-color: rgba(56, 189, 248, 0.4);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+        }
+
+        .archive-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
+        }
+
+        .archive-item:hover img {
+            opacity: 0.9;
+        }
+
+        /* Лайтбокс */
+        .lightbox {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.96);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .lightbox.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .lightbox-img {
+            max-width: 92%;
+            max-height: 85vh;
+            border-radius: 8px;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.9);
+            transform: scale(0.95);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .lightbox.open .lightbox-img {
+            transform: scale(1);
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 2rem;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+
+        .lightbox-close:hover {
+            opacity: 1;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            font-size: 0.7rem;
+            color: #334155;
+            font-weight: 700;
+        }
+        .agents-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+            margin-bottom: 2rem;
+            padding: 0.8rem 1rem;
+            border-top: 1px solid rgba(255,255,255,0.04);
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .agents-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #334155;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .agents-names {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #64748b;
+            letter-spacing: 0.03em;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="ocean-canvas"></canvas>
+
+    <header>
+        <h1>DRUNOSTAN.pub</h1>
+    </header>
+
+    <main>
+        <div class="block-title">О проекте</div>
+        <section class="lilypad-box card-main">
+            <p>Телеграм-проект, специализирующийся на проведении рейдов и полном уничтожении анти-рейд систем в чатах. Снос флудов и валидация враждебно настроенных персон.</p>
+        </section>
+
+        <div class="block-title">Статистика</div>
+        <div class="stats-grid">
+            <div class="lilypad-box cell-1">
+                <span class="cell-label">В атаке</span>
+                <span class="cell-value">16</span>
+            </div>
+            <div class="lilypad-box cell-2">
+                <span class="cell-label">Всего участников</span>
+                <span class="cell-value">45</span>
+            </div>
+            <div class="lilypad-box cell-3">
+                <span class="cell-label">Зарейжено чатов</span>
+                <span class="cell-value">8</span>
+            </div>
+            <div class="lilypad-box cell-4">
+                <span class="cell-label">Убитых ВЛД</span>
+                <span class="cell-value">0</span>
+            </div>
+        </div>
+
+        <div class="block-title">Создатели</div>
+        <section class="lilypad-box card-creators">
+            <div class="cell-label">главные организаторы</div>
+            <div class="creator-links">@mysopL2LL , @nomdp</div>
+            <div class="tags">#PVT #РБД</div>
+        </section>
+
+        <section>
+            <a href="http://t.me/drunostan_bot" class="lilypad-box btn-action" target="_blank">Оставить заявку</a>
+        </section>
+
+        <footer>
+            &copy; 2026 DRUNOSTAN
+        </footer>
+
+        <div class="agents-block">
+            <span class="agents-label">агенты таксы</span>
+            <span class="agents-names">данила жжкин · сурок</span>
+        </div>
+
+        <div class="abyssal-archive">
+            <div class="block-title">Архив на дне бездны</div>
+            <div class="archive-grid">
+                <div class="archive-item" onclick="openLightbox(this.querySelector('img').src)">
+                    <img src="https://i.postimg.cc/289Bnp00/IMG-20260527-031510-145.jpg" alt="Архив 1">
+                </div>
+                <div class="archive-item" onclick="openLightbox(this.querySelector('img').src)">
+                    <img src="https://i.postimg.cc/FsCJ0tTG/IMG-20260527-031512-229.jpg" alt="Архив 2">
+                </div>
+                <div class="archive-item" onclick="openLightbox(this.querySelector('img').src)">
+                    <img src="https://i.postimg.cc/kgVRcjH8/IMG-20260527-031516-577.jpg" alt="Архив 3">
+                </div>
+                <div class="archive-item" onclick="openLightbox(this.querySelector('img').src)">
+                    <img src="https://i.postimg.cc/tCvVF0Bh/IMG-20260527-031519-534.jpg" alt="Архив 4">
+                </div>
+                <div class="archive-item" onclick="openLightbox(this.querySelector('img').src)">
+                    <img src="https://i.postimg.cc/8PXrL8ZR/IMG-20260527-031522-560.jpg" alt="Архив 5">
+                </div>
+                <div class="archive-item" onclick="openLightbox(this.querySelector('img').src)">
+                    <img src="https://i.postimg.cc/SN1zc0g7/IMG-20260527-031524-682.jpg" alt="Архив 6">
+                </div>
+                <div class="archive-item" onclick="openLightbox(this.querySelector('img').src)">
+                    <img src="https://i.postimg.cc/pXcnKNsK/IMG-20260527-031527-322.jpg" alt="Архив 7">
+                </div>
+                <div class="archive-item" onclick="openLightbox(this.querySelector('img').src)">
+                    <img src="https://i.postimg.cc/X71y9MsC/IMG-20260527-031532-940.jpg" alt="Архив 8">
+                </div>
+            </div>
+            
+        </div>
+
+        <div style="width:100%; margin-top: 2rem; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
+            <img src="https://i.postimg.cc/JhRFBdK6/IMG-20260527-052528-723.jpg" alt="Фото" style="width:100%; display:block; opacity:0.85;">
+        </div>
+
+    </main>
+
+    <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+        <button class="lightbox-close">&times;</button>
+        <img id="lightbox-img" class="lightbox-img" src="" alt="Увеличенное изображение" onclick="event.stopPropagation()">
+    </div>
+
+    <script>
+        // ── Ocean canvas: page-anchored rays + sea dust ──────────────
+        const canvas = document.getElementById('ocean-canvas');
+        const ctx    = canvas.getContext('2d');
+        let W, H;
+
+        // Фикс "шакалов" (Pixelation fix) — учитываем плотность пикселей экрана (Retina/Mobile)
+        function resize() {
+            const dpr = window.devicePixelRatio || 1;
+            W = window.innerWidth;
+            H = window.innerHeight;
+            
+            canvas.width  = W * dpr;
+            canvas.height = H * dpr;
+            
+            ctx.setTransform(1, 0, 0, 1, 0, 0); // Сброс трансформации перед scale
+            ctx.scale(dpr, dpr);
+            
+            const targetLength = document.documentElement.scrollHeight * 0.55;
+            RAYS[0].length = targetLength * 0.9;
+            RAYS[1].length = targetLength * 1.1;
+            RAYS[2].length = targetLength * 0.85;
+        }
+        window.addEventListener('resize', resize);
+
+        // Лучи привязаны к верхушке страницы (page px)
+        const RAYS = [
+            { cx: 0.22, topW: 25, botW: 35, length: 0, bright: 0.025, speed: 0.00012, phase: 0.0 },
+            { cx: 0.52, topW: 35, botW: 45, length: 0, bright: 0.020, speed: 0.00009, phase: 2.3 },
+            { cx: 0.76, topW: 20, botW: 30, length: 0, bright: 0.022, speed: 0.00015, phase: 4.7 },
+        ];
+        
+        resize();
+
+        function drawRay(ray, scrollY, t) {
+            const cx = ray.cx * W;
+            const sway = Math.sin(t * ray.speed + ray.phase) * 12;
+            const x    = cx + sway;
+
+            const y0 = 0 - scrollY;             
+            const y1 = ray.length - scrollY;    
+
+            if (y1 < 0 || y0 > H) return;
+
+            const yDraw0 = Math.max(y0, -50);
+            const yDraw1 = Math.min(y1, H + 50);
+
+            const p0 = (yDraw0 - y0) / (y1 - y0);
+            const p1 = (yDraw1 - y0) / (y1 - y0);
+            const avgProgress = (p0 + p1) / 2;
+
+            const w0 = ray.topW + (ray.botW - ray.topW) * p0;
+            const w1 = ray.topW + (ray.botW - ray.topW) * p1;
+
+            const passes = [
+                { wMult: 1.0, alpha: ray.bright,        baseBlur: 10, fadeBlur: 15 },
+                { wMult: 2.2, alpha: ray.bright * 0.45, baseBlur: 15, fadeBlur: 25 },
+                { wMult: 4.0, alpha: ray.bright * 0.18, baseBlur: 25, fadeBlur: 40 },
+            ];
+
+            passes.forEach(pass => {
+                const pw0 = w0 * pass.wMult;
+                const pw1 = w1 * pass.wMult;
+
+                const grad = ctx.createLinearGradient(x, yDraw0, x, yDraw1);
+                const aTop  = pass.alpha * (p0 < 0.05 ? p0 / 0.05 : 1);
+                const aMid  = pass.alpha;
+                const aFade = pass.alpha * 0.0;
+
+                grad.addColorStop(0.00, `rgba(186,230,253,${(aTop).toFixed(3)})`);
+                grad.addColorStop(0.15, `rgba(186,230,253,${aMid.toFixed(3)})`);
+                grad.addColorStop(0.60, `rgba(186,230,253,${(aMid * 0.5).toFixed(3)})`);
+                grad.addColorStop(1.00, `rgba(186,230,253,${aFade})`);
+
+                const currentBlur = pass.baseBlur + (pass.fadeBlur * avgProgress);
+
+                ctx.save();
+                ctx.filter = `blur(${currentBlur}px)`;
+                ctx.beginPath();
+                ctx.moveTo(x - pw0, yDraw0);
+                ctx.lineTo(x + pw0, yDraw0);
+                ctx.lineTo(x + pw1, yDraw1);
+                ctx.lineTo(x - pw1, yDraw1);
+                ctx.closePath();
+                ctx.fillStyle = grad;
+                ctx.fill();
+                ctx.restore();
+            });
+
+            const glimStart = y1;
+            const glimEnd   = y1 + 300;
+            if (glimStart < H && glimEnd > 0) {
+                const gGlim = ctx.createLinearGradient(x, glimStart, x, glimEnd);
+                gGlim.addColorStop(0.00, `rgba(186,230,253,${(ray.bright * 0.12).toFixed(3)})`);
+                gGlim.addColorStop(1.00, `rgba(186,230,253,0.00)`);
+
+                const gw0 = ray.botW * 5;
+                const gw1 = ray.botW * 8;
+                ctx.save();
+                ctx.filter = 'blur(35px)';
+                ctx.beginPath();
+                ctx.moveTo(x - gw0, glimStart);
+                ctx.lineTo(x + gw0, glimStart);
+                ctx.lineTo(x + gw1, glimEnd);
+                ctx.lineTo(x - gw1, glimEnd);
+                ctx.closePath();
+                ctx.fillStyle = gGlim;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // --- Морская пыль (page-anchored) ---
+        const PAGE_DUST_H = 8000;  
+        const DUST_START  = 600;   
+        const DUST_COUNT  = 160;
+
+        const dust = Array.from({ length: DUST_COUNT }, () => ({
+            pageX: Math.random() * 1,          
+            pageY: DUST_START + Math.random() * PAGE_DUST_H,
+            r:     Math.random() * 1.3 + 0.3,
+            alpha: Math.random() * 0.22 + 0.04,
+            vx:   (Math.random() - 0.5) * 0.003,
+            vy:   (Math.random() - 0.5) * 0.0015,
+            wobble:      Math.random() * Math.PI * 2,
+            wobbleSpeed: 0.00005 + Math.random() * 0.00008,
+            wobbleAmpX:  8  + Math.random() * 15,
+            wobbleAmpY:  3  + Math.random() * 6,
+        }));
+
+        let lastT = 0;
+        function drawDust(scrollY, t) {
+            const dt = t - lastT;
+
+            dust.forEach(p => {
+                p.pageX += p.vx * dt * 0.001;
+                p.pageY += p.vy * dt * 0.001;
+
+                if (p.pageX < -0.05) p.pageX += 1.1;
+                if (p.pageX > 1.05)  p.pageX -= 1.1;
+                if (p.pageY < DUST_START)              p.pageY = DUST_START + PAGE_DUST_H;
+                if (p.pageY > DUST_START + PAGE_DUST_H) p.pageY = DUST_START;
+
+                const screenX = p.pageX * W + Math.sin(t * p.wobbleSpeed + p.wobble) * p.wobbleAmpX;
+                const screenY = p.pageY - scrollY + Math.cos(t * p.wobbleSpeed * 0.7 + p.wobble) * p.wobbleAmpY;
+
+                if (screenY < -10 || screenY > H + 10) return;
+
+                const fadeIn = Math.min(1, (p.pageY - DUST_START) / 200);
+
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(screenX, screenY, p.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(190,225,255,${(p.alpha * fadeIn).toFixed(3)})`;
+                ctx.fill();
+                ctx.restore();
+            });
+
+            lastT = t;
+        }
+
+        // --- Main loop ---
+        function loop(t) {
+            ctx.clearRect(0, 0, W, H);
+            const scrollY = window.scrollY || 0;
+            RAYS.forEach(r => drawRay(r, scrollY, t));
+            drawDust(scrollY, t);
+            requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+    </script>
+
+    <script>
+        const boxes = document.querySelectorAll('.lilypad-box');
+        boxes.forEach(box => {
+            box.addEventListener('click', () => {
+                boxes.forEach(b => b.classList.remove('active'));
+                box.classList.add('active');
+            });
+        });
+
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightbox-img');
+
+        function openLightbox(url) {
+            lightboxImg.src = url;
+            lightbox.classList.add('open');
+            document.body.style.overflow = 'hidden'; 
+        }
+
+        function closeLightbox() {
+            lightbox.classList.remove('open');
+            lightboxImg.src = '';
+            document.body.style.overflow = ''; 
+        }
+    </script>
+
+</body>
+</html>
